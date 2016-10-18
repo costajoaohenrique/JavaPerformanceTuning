@@ -1,5 +1,7 @@
 # 1.Introdução
-  ## Um Breve Resumo
+===============
+
+## Um Breve Resumo
     Cap2 - Discute algumas metodologias de aplicação e armadilhas do Java
     Cap3 - Overview de ferramentas dispniveis para monitoramento de aplicações
     Cap4 - JIT compilation
@@ -11,31 +13,35 @@
     Cap11 - JPA e JDBC
     Cap12 - Dicas gerais da API do Java SE
   
-  ## Pataformas e Convenções
-    -> Utilizado o JVM padrão HotSpot da Oracle
-    -> Java 7 ou superior
-    -> Implementacao do Garbage G1 - Java 7
+## Pataformas e Convenções
+* Utilizado o JVM padrão HotSpot da Oracle
+* Java 7 ou superior
+* Implementacao do Garbage G1 - Java 7
     
-  ## JVM Tunning Flags
-    -> Flag boleano ligado = -XX:+FlagsName
-    -> Flag boleano desligado = -XX:-FlagsName
-      _Client Class and Server Class
-        -> Máquinas de 32-bit são considerado pela JVM client class
-        -> Máquinas de 64-bit são considerado pela JVM server class
+## JVM Tunning Flags
+* Flag boleano ligado = -XX:+FlagsName
+* Flag boleano desligado = -XX:-FlagsName
+
+ ### Client Class and Server Class
+      Máquinas de 32-bit são considerado pela JVM client class
+      Máquinas de 64-bit são considerado pela JVM server class
     
-  ## A história de performance completa
-    -> Escreva algoritmos melhores
-      -> Não existe uma flag com a opção mágica -XX:+RunReallyFast
-      -> Realmente a JVM otimiza seu for iterando um array para buscar um nome, mas seria melhor utilizar um HashMap
-    -> Escreva menos Código
-      -> Quanto mais código tiver para ser compilado mais tempo levará para rodar
-      -> Quanto mais objeto tiver que ser alocado e discartado, mais trabalho o GC ira ter.
-      -> Quanto mais objeto tiver que ser alocado e retidos, mais tempo o ciclo do GC vai demorar.
-      -> Quanto mais classes tiver que ser carregado do disco para a JVM, mais longo irá ser a inicialização da aplicação.
-        _Nós iremos em última analise sempre perder a guerra
-          -> Na verdade ao decorrer do tempo a perfonce vai caindo devido a inclusão de novas features
-          -> E para isso novos padrões são adotados
-          -> Exemplo é o Firefox 23... ele abrirá mais lentamente um HTML padrão do que um MAC Quadra 95
+## A história de performance completa
+
+   ### Escreva algoritmos melhores
+      - Não existe uma flag com a opção mágica -XX:+RunReallyFast
+      - Realmente a JVM otimiza seu for iterando um array para buscar um nome, mas seria melhor utilizar um HashMap
+      
+   ### Escreva menos Código
+      - Quanto mais código tiver para ser compilado mais tempo levará para rodar
+      - Quanto mais objeto tiver que ser alocado e discartado, mais trabalho o GC ira ter.
+      - Quanto mais objeto tiver que ser alocado e retidos, mais tempo o ciclo do GC vai demorar.
+      - Quanto mais classes tiver que ser carregado do disco para a JVM, mais longo irá ser a inicialização da aplicação.
+      
+        #### Nós iremos em última analise sempre perder a guerra
+            - Na verdade ao decorrer do tempo a perfonce vai caindo devido a inclusão de novas features
+            - E para isso novos padrões são adotados
+            - Exemplo é o Firefox 23... ele abrirá mais lentamente um HTML padrão do que um MAC Quadra 95
           
   ## Oh então vamos em frente, Otimização Prematura
     <<<<<<-- Donald Knuth -->>>>>>
@@ -66,13 +72,13 @@
       * Aplique o "Occam's Razor" para diagnosticar o problema. O mais provavel causa do problema são os códigos novos do que problema de JVM ou OS.
       * Escreva algoritmos simples para as operações mais utilizadas na aplicação. Mesmo que custe um "Slow Down" para outras menos utilizadas.
 
-  ## Sumario
-      -> O Java 7 e 8 introduziram inúmeras features e ferramentas para melhorar a performance na JVM, esse livro vai ajudar a entender todos eles
-      -> Lembrando que a JVM é provavelmente a figura com menos chances de ser a causadora de diminuição de performance de uma aplicação
+## Sumario
+      O Java 7 e 8 introduziram inúmeras features e ferramentas para melhorar a performance na JVM, esse livro vai ajudar a entender todos eles
+      Lembrando que a JVM é provavelmente a figura com menos chances de ser a causadora de diminuição de performance de uma aplicação
 
 # 2. Uma abordagem ao teste de desempenho
 
-->Nesse cápitulo é abordado os 4 Principios de obtenção de teste de performance. A ciência da Engenharia de Performance é coberta por esses Principios.
+*Nesse cápitulo é abordado os 4 Principios de obtenção de teste de performance. A ciência da Engenharia de Performance é coberta por esses Principios.*
 
   ## Teste uma aplicação real
     > O primeiro Principio consiste em que o teste deve ser feito no produto atual e da forma que o produto vai ser utilizado. E é dividido em 3 categorias
