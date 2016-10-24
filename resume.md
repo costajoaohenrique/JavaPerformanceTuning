@@ -93,9 +93,60 @@
 
 ### Microbenchmarks
 
-- O Microbenchmarks é um teste designado para mensurar uma unidade muito pequena de performance: O tempo para executar um algoritmo versus sua Implementacao alternativa
-      
+O primeiro dessa categorias é o Microbenchmarks. O Microbenchmarks é um teste designado para mensurar uma unidade muito pequena de performance exemplo: implementações de chamadas de métodos sincronizado versus o não sincronizado, o overhead na criação de uma thread versus utilizando um pool de thread etc.
 
-    
-  
+Microbenchmarks pode parecer uma boa idéia, mas é muito dificil escrever corretamente.
+Considere o código a seguir, que testa um algoritmo de Fibonachi
+   
+```
+public void doTest() {
+// Main Loop
+double l;
+long then = System.currentTimeMillis();
 
+for (int i = 0; i < nLoops; i++) {
+l = fibImpl1(50);
+}
+long now = System.currentTimeMillis();
+System.out.println("Elapsed time: " + (now - then));
+}
+...
+private double fibImpl1(int n) {
+if (n < 0) throw new IllegalArgumentException("Must be > 0");
+if (n == 0) return 0d;
+if (n == 1) return 1d;
+double d = fibImpl1(n - 2) + fibImpl(n - 1);
+if (Double.isInfinite(d)) throw new ArithmeticException("Overflow");
+return d;
+}
+
+```
+
+Esse código parece simples porém possui vários problemas
+
+####Microbenchmarks deve usar seus resultados
+
+O problema do código acima é que nunca representa verdadeiramente o estado do programa.
+O calculo de Fibonnaci nunca é usado para a medição do tempo pois a JVM é livre para discartar-lo em tempo de execução
+No final o compilador irá executar esse código:
+
+```
+long then = System.currentTimeMillis();
+long now = System.currentTimeMillis();
+System.out.println("Elapsed time: " + (now - then));
+
+```
+
+Assim o tempo medido será de milesegundos idependentemente da implementação do calculo do Fibonnaci. 
+Detalhes de como a JVM elimina os loops no Capitulo 4
+
+O problema acima é facilmente resolvido modificando a variavel local "l" para variavel de instância com (declarado como volatile), permitindo a performance do método seja mensurado.
+(Detalhes da razão da variavel deve ser volatile pode ser encontrado no capitulo 9)
+
+
+####Theread Microbenchmarks
+```
+A necessidade de utilizar uma variável volátil neste exemplo aplica-se mesmo quando o microbenchmark
+é single-threaded.
+
+```
