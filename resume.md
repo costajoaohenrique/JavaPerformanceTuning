@@ -149,4 +149,144 @@ O problema acima é facilmente resolvido modificando a variavel local "l" para v
 A necessidade de utilizar uma variável volátil neste exemplo aplica-se mesmo quando o microbenchmark
 é single-threaded.
 
+Seja cuidadoso quando codificar MicroBenchmarks 'Thredado', pois quando varias threads são executadas em um pequeno trecho de código sincronizado a chance de existir um gargalo de performance é muito alta.
+
+Assim a validação no final será feita sobre como a JVM trata a contenção das threads e não no microbenchmark
+
 ```
+
+####Microbenchmarks não deve incluir operações irrelevantes
+
+Mesmo assim existem outras amardilhas em potencial. Esse codigo executa somente uma função: Calculo de Fibonacci.
+Porém um compilador inteligente irá executar 1 vez o loop ou até mesmo discartar alguns loops caso ache redundante.
+Além disso a execução do método *fibImpl(1000)* pode ser muito diferente que *fibImpl(1)* pois o compilador poderá retirar alguns passos do loop (por o valor ser fixo) , por isso os diferentes inputs devem ser considerados nesse tipo de analise.
+Para melhor analise o parametro passado deve ser ramdomico, mas deve ser usado com cautela.
+
+Uma forma fácil de codificar o uso de numero randomico para um processo de loop pode ser da seguinte maneira:
+
+```
+for (int i = 0; i < nLoops; i++) {
+l = fibImpl1(random.nextInteger());
+}
+
+```
+
+Porém usando o código acima iremos adicionar mais tempo de processamento para gerar os números ramdomicos. E não é isso que queremos. 
+
+No microbanchmarks o valores de entrada devem ser calculadas previamente, conforme a seguir:
+
+```
+int[] input = new int[nLoops];
+for (int i = 0; i < nLoops; i++) {
+input[i] = random.nextInt();
+}
+long then = System.currentTimeMillis();
+for (int i = 0; i < nLoops; i++) {
+try {
+l = fibImpl1(input[i]);
+} catch (IllegalArgumentException iae) {
+}
+}
+long now = System.currentTimeMillis();
+
+```
+
+####Microbenchmarks deve medir a entrada correta
+
+A terceira armadilha é range de valores, pois valores gerados arbitrariamente não serão necessariamente a representação real de como o código sera usado.
+Um exemplo disso é se o valor for negativo ou maior que 1476 (Valor máximo que o calculo de Fibbonacci conseguirá armazenar o resultado em um double).
+Assim uma excessão será lançada na metade do método e assim a medição não será tão efetiva.
+Uma implementação alternativa seria algo como:
+
+```
+public double fibImplSlow(int n) {
+if (n < 0) throw new IllegalArgumentException("Must be > 0");
+if (n > 1476) throw new ArithmeticException("Must be < 1476");
+return verySlowImpl(n);
+}
+
+```
+
+Dessa maneira o código sera mais rapido simplesmente pelo fato da vericação ser antes do método de calculo.
+
+
+####Que tal um periodo de aquecimento?
+```
+Uma das caracteristicas de performance do Java é a melhoria de performance a cada execução do mesmo código. 
+Por esse motivo o Microbenchmark deve ter um tempo de aquecimento, para que a JVM faça um código mais otimizado.
+Caso não tenha esse tempo o Microbenchmark não será avaliado pela o seu código mais sim pela performance de sua compilação.
+
+```
+
+Juntando todos as informações o código do Microbenchmark será algo como:
+
+```
+package net.sdo;
+
+import java.util.Random;
+
+public class FibonacciTest {
+
+private volatile double l;
+private int nLoops;
+private int[] input;
+
+public static void main(String[] args) {
+FibonacciTest ft = new FibonacciTest(Integer.parseInt(args[0]));
+ft.doTest(true);
+ft.doTest(false);
+}
+
+private FibonacciTest(int n) {
+nLoops = n;
+input = new int[nLoops];
+Random r = new Random();
+for (int i = 0; i < nLoops; i++) {
+input[i] = r.nextInt(100);
+}
+}
+
+private void doTest(boolean isWarmup) {
+long then = System.currentTimeMillis();
+for (int i = 0; i < nLoops; i++) {
+l = fibImpl1(input[i]);
+}
+if (!isWarmup) {
+long now = System.currentTimeMillis();
+System.out.println("Elapsed time: " + (now - then));
+}
+}
+
+private double fibImpl1(int n) {
+if (n < 0) throw new IllegalArgumentException("Must be > 0");
+if (n == 0) return 0d;  
+if (n == 1) return 1d;
+double d = fibImpl1(n - 2) + fibImpl(n - 1);
+if (Double.isInfinite(d)) throw new ArithmeticException("Overflow");
+return d;
+}
+
+}
+
+```
+
+Mesmo este MicroBenchmarks mede algumas coisas que não são pertinentes à aplicação Fibonacci: há uma certa quantidade sobrecarga na criação das chamadas para o método *fibImpl1()*, e a necessidade de escrever cada resultado para um variável volátil é uma sobrecarga adicional. 
+Lembrando que a otimização da JVM se baseia em "Profile Feedback", onde a otimização depende de quantas vezes o método foi executado, tipos de variaveis, tamanho da pilha etc
+Também vale ressaltar que a otimização pode ser diferente dependendo em qual classe foi implementado a chamada (Devido ao compilador).
+Finalmente, há a questão do MicroBenchmark ser analisado globalmente (Toda a operação) em segundos mas é muito comum também analisar por exemplo a diferença por iteração em nanosegundos. Aí entra a teoria da "morte por 1000 cortes", pois cada nanosegundo somados em uma coleção que será acessado milhões de vezes realmente faz sentido analisar.
+
+Escrever microbanchmarks é dificil pois depende muito do contexto do problema,  e devera ser usado em uma situação realmente que seja útil a sua abordagem, pois dependendo será necessário utilizar um conceito mas Macro de testes.
+
+
+###Macrobenchmarks
+A melhor coisa a usar para medir o desempenho de uma aplicação é a própria aplicação, em conjunto com os recursos externos que utiliza
+Imagine o seguinte em uma estrutura onde a aplicação tem a capacidade de processar 500 RPS (Requisição por segundo) não necessariamente significa que essa será o desempenho real dela, pois depende de outros recursos externos que envolve a aplicação como por exemplo um Banco de Dados que só tenha a  capacidade de 100 RPS. Independente da aplicação o "Macro" só vai suportar apenas 100 RPS
+
+###Teste do Sistema completo com vários JVMs
+```
+Um caso particularmente importante de testar uma aplicação inteira ocorre quando vários aplicativos são executados ao mesmo tempo no mesmo hardware.
+Pois quando uma JVM esta rodando sozinha no hardware o desempenho dela será melhor pois ela assumirá que todos os recursos do hardware estão disponiveis.
+Por exemplo uma JVM rodando na maquina sozinha ao executar um GarbageCollector ela usará 100% da CPU pois não haverá outra aplicação dividindo o recurso com ela.
+Já uma JVM que esta rodando em uma maquina com outras aplicações (Banco de dados, Antivirus e até mesmo outras JVMs) ela não conseguirá atingir a os 100% da CPU ao executar o GC reduzindo o desempenho da aplicação.
+```
+###Mesobenchmarks
